@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Update Product</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    #nameList {
+      border: 1px solid #ccc;
+      background: white;
+      position: absolute;
+      z-index: 100;
+      max-height: 150px;
+      overflow-y: auto;
+      width: 280px;
+      margin-left: auto;
+      margin-right: auto;
+      left: 0; right: 0;
+      display: none;
+    }
+
+    #nameList div {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    #nameList div:hover {
+      background-color: #f1f1f1;
+    }
+
+    .position-relative {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+   <header>
+    
+    Update Inventory
+    <button id="themeToggle" class="theme-toggle">🌙 Dark Mode</button>
+
+  </header>
+  <div class="container">
+    <h2>🔄 Update Product Quantity</h2>
+
+    <form id="updateForm">
+      <label for="name">Product Name:</label>
+      <div class="position-relative">
+        <input type="text" id="name" autocomplete="off" required>
+        <p style="text-align:center;">
+  📦 Current Quantity: <span id="currentQty">--</span>
+</p>
+
+        <div id="nameList"></div>
+      </div>
+
+      <label for="change">Change in Quantity:</label>
+      <input type="number" id="change" required>
+
+      <button type="submit">Update Product</button>
+    </form>
+
+    <p id="msg" style="text-align: center; margin-top: 10px;"></p>
+  </div>
+
+  <script>
+    let productNames = [];
+
+    // Fetch product names for autocomplete
+    fetch('/api/stock/names')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          productNames = data.names;
+        }
+      });
+
+    const nameInput = document.getElementById("name");
+    const nameList = document.getElementById("nameList");
+
+nameInput.addEventListener("input", () => {
+  const input = nameInput.value.toLowerCase();
+  nameList.innerHTML = '';
+
+  if (!input) {
+    nameList.style.display = "none";
+    document.getElementById("currentQty").textContent = "--";
+    return;
+  }
+
+  const filtered = productNames.filter(name =>
+    name.toLowerCase().includes(input)
+  );
+
+  filtered.forEach(name => {
+    const div = document.createElement("div");
+    div.textContent = name;
+    div.onclick = () => {
+      nameInput.value = name;
+      nameList.style.display = "none";
+
+      // Fetch and show current quantity
+      fetch(`/api/stock`)
+        .then(res => res.json())
+        .then(data => {
+          const product = data.find(p => p.name === name);
+          if (product) {
+            document.getElementById("currentQty").textContent = product.quantity;
+          }
+        });
+    };
+    nameList.appendChild(div);
+  });
+
+  nameList.style.display = filtered.length ? "block" : "none";
+});
+
+
+    // Handle form submit
+    document.getElementById("updateForm").addEventListener("submit", e => {
+  e.preventDefault();
+
+  const name = nameInput.value.trim();
+  const change = parseInt(document.getElementById("change").value);
+  const currentQty = parseInt(document.getElementById("currentQty").textContent);
+
+  if (isNaN(currentQty)) {
+    alert("Please select a valid product to update.");
+    return;
+  }
+
+  const newQty = currentQty + change;
+
+  if (newQty < 0) {
+    alert("❌ Quantity cannot go below zero.");
+    return;
+  }
+
+  fetch('/api/stock/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, change })
+  })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("msg").textContent = data.message || (data.success ? "✅ Stock updated!" : "❌ Update failed.");
+      if (data.success && typeof data.newQuantity !== 'undefined') {
+        document.getElementById("currentQty").textContent = data.newQuantity;
+      }
+    });
+});
+
+  </script>
+  <script>
+  const toggle = document.getElementById('themeToggle');
+  const body = document.body;
+
+  // Load saved theme
+  if (localStorage.getItem('theme') === 'dark') {
+    body.classList.add('dark-mode');
+    toggle.innerText = '☀️ Light Mode';
+  }
+
+  toggle.addEventListener('click', () => {
+    body.classList.toggle('dark-mode');
+    const isDark = body.classList.contains('dark-mode');
+    toggle.innerText = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+</script>
+
+   <footer>
+    &copy; 2025 Nova Squaqron Team | Built for Hackathon
+  </footer>
+</body>
+</html>

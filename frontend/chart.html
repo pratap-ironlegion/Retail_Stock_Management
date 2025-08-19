@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stock Charts</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    
+
+    h1, h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .chart-container {
+      width: 90%;
+      max-width: 800px;
+      height: 400px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    📊 Stock Visualization Dashboard
+    <button id="themeToggle" class="theme-toggle">🌙 Dark Mode</button>
+
+  </header>
+  
+
+  <div class="chart-container">
+    <h2>Bar Chart – Product Quantities</h2>
+    <canvas id="stockChart"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h2>Pie Chart – Stock % by Product</h2>
+    <canvas id="stockPieChart"></canvas>
+  </div>
+
+  <script>
+    fetch("http://localhost:3000/api/stock")
+      .then(res => res.json())
+      .then(data => {
+        const productNames = data.map(p => p.name);
+        const quantities = data.map(p => p.quantity);
+
+        // 🎯 Bar Chart
+        const barCtx = document.getElementById('stockChart').getContext('2d');
+        new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: productNames,
+            datasets: [{
+              label: 'Stock Quantity',
+              data: quantities,
+              backgroundColor: quantities.map(q =>
+                q <= 10 ? '#e74c3c' : '#3498db'
+              ),
+              borderColor: '#2c3e50',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: 'Stock Quantity per Product',
+                font: {
+                  size: 18
+                }
+              },
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { font: { size: 14 } }
+              },
+              x: {
+                ticks: { font: { size: 14 } }
+              }
+            }
+          }
+        });
+
+        // 🥧 Pie Chart
+        const total = quantities.reduce((a, b) => a + b, 0);
+        const percentages = quantities.map(q => ((q / total) * 100).toFixed(2));
+
+        const pieCtx = document.getElementById('stockPieChart').getContext('2d');
+        new Chart(pieCtx, {
+          type: 'pie',
+          data: {
+            labels: productNames,
+            datasets: [{
+              label: 'Stock %',
+              data: percentages,
+              backgroundColor: [
+                '#3498db', '#9b59b6', '#1abc9c',
+                '#f39c12', '#e67e22', '#2ecc71',
+                '#e74c3c', '#95a5a6', '#16a085'
+              ]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: 'Stock Percentage by Product',
+                font: { size: 18 }
+              },
+              legend: {
+                position: 'bottom',
+                labels: {
+                  font: { size: 13 }
+                }
+              }
+            }
+          }
+        });
+      })
+      .catch(err => {
+        console.error("❌ Chart load error:", err);
+        alert("Failed to load stock data. Is the backend running?");
+      });
+  </script>
+  <script>
+  const toggle = document.getElementById('themeToggle');
+  const body = document.body;
+
+  // Load saved theme
+  if (localStorage.getItem('theme') === 'dark') {
+    body.classList.add('dark-mode');
+    toggle.innerText = '☀️ Light Mode';
+  }
+
+  toggle.addEventListener('click', () => {
+    body.classList.toggle('dark-mode');
+    const isDark = body.classList.contains('dark-mode');
+    toggle.innerText = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+</script>
+
+
+    <footer>
+    &copy; 2025 Nova Squaqron Team | Built for Hackathon
+  </footer>
+</body>
+</html>

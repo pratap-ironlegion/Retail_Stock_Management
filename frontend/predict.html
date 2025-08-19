@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Predict Product Demand</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    #results {
+      margin-top: 30px;
+      background: white;
+      padding: 25px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+    ul {
+      padding-left: 20px;
+      margin-top: 5px;
+    }
+    li {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    Predict Products
+    <button id="themeToggle" class="theme-toggle">🌙 Dark Mode</button>
+
+  </header>
+  <div class="container">
+    <h1>🔮 Product Demand Prediction</h1>
+
+    <label for="city">Enter City:</label>
+    <input type="text" id="city" placeholder="e.g. Delhi" value="Delhi" />
+
+    <button onclick="getPrediction()">Get Prediction</button>
+
+    <div id="results" style="display: none;">
+      <h3>📍 Location: <span id="resCity"></span></h3>
+      <p><strong>🌤️ Weather:</strong> <span id="weather"></span></p>
+      <p><strong>🎉 Upcoming Festivals:</strong></p>
+      <ul id="festivals"></ul>
+      <p><strong>📦 Suggested Products:</strong></p>
+      <ul id="suggestions"></ul>
+    </div>
+  </div>
+
+  <script>
+    function getPrediction() {
+      const city = document.getElementById("city").value;
+
+      fetch(`/api/predict?city=${encodeURIComponent(city)}&country=IN`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) {
+            alert("Prediction failed.");
+            return;
+          }
+
+          document.getElementById("resCity").innerText = data.city;
+          document.getElementById("weather").innerText = data.weather;
+
+          const festivalsList = document.getElementById("festivals");
+          festivalsList.innerHTML = '';
+          data.festivals.forEach(f => {
+            const li = document.createElement("li");
+            li.textContent = f;
+            festivalsList.appendChild(li);
+          });
+
+          const suggestionsList = document.getElementById("suggestions");
+          suggestionsList.innerHTML = '';
+          data.suggestions.forEach(p => {
+            const li = document.createElement("li");
+            li.textContent = p;
+            suggestionsList.appendChild(li);
+          });
+
+          document.getElementById("results").style.display = 'block';
+        })
+        .catch(() => alert("Something went wrong while predicting."));
+    }
+  </script>
+  <script>
+  const toggle = document.getElementById('themeToggle');
+  const body = document.body;
+
+  // Load saved theme
+  if (localStorage.getItem('theme') === 'dark') {
+    body.classList.add('dark-mode');
+    toggle.innerText = '☀️ Light Mode';
+  }
+
+  toggle.addEventListener('click', () => {
+    body.classList.toggle('dark-mode');
+    const isDark = body.classList.contains('dark-mode');
+    toggle.innerText = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+</script>
+
+    <footer>
+    &copy; 2025 Nova Squaqron Team | Built for Hackathon
+  </footer>
+</body>
+</html>
