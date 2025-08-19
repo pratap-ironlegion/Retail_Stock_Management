@@ -1,4 +1,4 @@
-<h1>Retail Stock Manager</h1>h1
+<h1>Retail Stock Manager</h1>
 
 This is a web based project built to manage stock by the retail shop and provides the functionalities:<br>
 1.View stock<br>
